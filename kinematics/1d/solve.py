@@ -1,6 +1,7 @@
 from sympy import symbols, solve, Eq
+from sympy import sin, pi
 
-def problem_solver(initial: dict[str, float], final: dict[str, float], find: str) -> list[dict[str, float]]:
+def problem_solver(initial: dict[str, float], final: dict[str, float], find: str, incline: float = None) -> list[dict[str, float]]:
     """
     Solves a 1D kinematics problem!
 
@@ -16,6 +17,8 @@ def problem_solver(initial: dict[str, float], final: dict[str, float], find: str
             
             ***INITIAL dict ONLY***
             a: (acceleration) #! Acceleration is assumed to be constant #!
+
+        incline (float): Angle of the incline (in radians)     
 
         find (str): Variable to be found; designated as a suffix appended onto one of the key placeholders [0 for init, 1 for final]
             e.g. find='s1' to find the final position
@@ -35,6 +38,9 @@ def problem_solver(initial: dict[str, float], final: dict[str, float], find: str
             if name not in group.keys():
                 group[name] = symbols(f'{name}{group_number}')
 
+    if incline:
+        initial['a'] = sin(incline) * initial['a']
+
     # the big 5 kinematic equations... if these can't solve it, i'm too lazy to write anything else so good luck
     big_5 = [
         Eq(final['v'], initial['v'] + initial['a']*(final['t'] - initial['t'])),
@@ -53,7 +59,7 @@ def problem_solver(initial: dict[str, float], final: dict[str, float], find: str
                     solution[0][name] = result.evalf()
                     return solution
 
-def resolver(initial: dict[str, float], final: dict[str, float], find: list[str]) -> list[dict[str, float]]:
+def resolver(initial: dict[str, float], final: dict[str, float], find: list[str], incline: float = None) -> list[dict[str, float]]:
     """
     The resolver loops through the problem_solver until all specified variables are found
 
@@ -71,6 +77,8 @@ def resolver(initial: dict[str, float], final: dict[str, float], find: list[str]
             a: (acceleration) 
             #! Acceleration is assumed to be constant
 
+        incline (float): Angle of the incline (in radians)
+
         find (list[str]): Variables to be found; designated as a suffixes appended onto one of the key placeholders [0 for init, 1 for final]
             e.g. find=['t1', 's1'] to find the final time, then final position
             #! variables that are dependant on another to be found must be placed after the independent variable on the find list
@@ -84,7 +92,7 @@ def resolver(initial: dict[str, float], final: dict[str, float], find: list[str]
 
     # loops through each specified variable, fills up the dicts with found variables
     for variable in find:
-        answer = problem_solver(initial=group_collection[0], final=group_collection[1], find=variable)
+        answer = problem_solver(initial=group_collection[0], final=group_collection[1], find=variable, incline=incline)
         key = next(iter(answer[0]))
         group_collection[int(key.name[-1])][key.name[0]] = answer[0][key]
 
@@ -94,15 +102,15 @@ if __name__ == '__main__':
     initial = {
         's': 0,
         't': 0,
-        'v': 0,
-        'a': 9.8
+        'a': -9.8,
+        'v': 30
     }
 
     final = {
-        'v': 3e8,
+        'v': 0
     }
 
-    init, fin = resolver(initial=initial, final=final, find=['t1', 's1'])
+    init, fin = resolver(initial=initial, final=final, find=['s1'], incline=0.174533)
 
     for val in init.items():
         print(val)
